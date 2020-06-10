@@ -1,0 +1,15 @@
+{
+  "name": "katas",
+  "version": "1.0.0",
+  "description": "",
+  "main": "tennis_1.js",
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "^7.2.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Paulina Dziadkiewicz",
+  "license": "ISC"
+}
