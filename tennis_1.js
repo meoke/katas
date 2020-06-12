@@ -20,77 +20,117 @@ b. If the player with advantage wins the ball he wins the game c. If the player 
 4. If at least three points have been scored by each side and a player has one more point than his opponent, the score of the game is “advantage” for the player in the lead.
 */
 
-const playersID = {
-    player1: 0,
-    player2: 1,
+// 1.   string dot wyniku + description
+// 2.OK testy game is over
+// 3.OK testy player has advantage
+
+const rules = {
+    playersID: {
+        unknown: 0,
+        player1: 1,
+        player2: 2,
+    },
+    scoreValues: {  
+        love: 0,
+        fifteen: 1,
+        thirty: 2,
+        forty: 3,
+    },
+    scoreNames: {  
+        0: "love",
+        1: "15",
+        2: "30",
+        3: "40",
+    },
+    getNextScoreValue: (scoreName) => {
+        switch(scoreName){
+            case rules.scoreValues.love:
+                return rules.scoreValues.fifteen;
+            case rules.scoreValues.fifteen:
+                return rules.scoreValues.thirty;
+            default:
+                return rules.scoreValues.forty;
+        }
+    }
 }
 
 class GameScore{
     constructor() {
-        this.scores = [0, 0];
-    }
-
-    getScoreName(points){
-        const scoreNames = {  0: 'love',
-                        1: '15',
-                        2: '30',
-                        3: '40'
-                    }
-        if (points in scoreNames)
-                    return scoreNames[points];
-        return String(points);
+        this.scorePlayer1 = rules.scoreValues.love;
+        this.scorePlayer2 = rules.scoreValues.love;
+        this.advantage = rules.playersID.unknown;
+        this.winner = rules.playersID.unknown;
     }
 
     getScoreDescription(){
-        const descriptionIntro = (() => {
-            const winnerID = this.scores.indexOf(Math.max(...this.scores));
-            const looserID = this.scores.indexOf(Math.min(...this.scores));
-            const scoreDiff = this.scores[winnerID] - this.scores[looserID];
-            let descriptionIntro = '';
-            if (scoreDiff === 1){
-                return `Adventage for Player${winnerID+1}.\t`
+        const gameState = (() => {
+            if (this.winner !== rules.playersID.unknown){
+                return ` ${this.getPlayerID(this.winner)} HAS WON!!!`
             }
-            else if(scoreDiff >= 2 && this.scores[winnerID] >=4 ){
-                return `The winner is Player${winnerID+1}.\t`
+            else if (this.advantage !== rules.playersID.unknown){
+                return ` ${this.getPlayerID(this.winner)} IS IN ADVENTAGE!!!`
             }
-            return "";
+            else{
+                return ` Game in progress!`;
+            }
         })();
-    
-        const score1 = this.getScoreName(this.scores[playersID.player1]);
-        const score2 = this.getScoreName(this.scores[playersID.player2]);
-        return `${descriptionIntro}Player1: ${score1}, Player2: ${score2}.`
+        return `Player1: ${rules.scoreNames[this.scorePlayer1]}, Player2: ${rules.scoreNames[this.scorePlayer2]}.${gameState}`;
     }
 
-    gameIsOver = () => {
-        const maxScore = Math.max(...this.scores);
-        return maxScore >= 4 && (maxScore - Math.min(...this.scores)) >= 2;
+    gameIsOver = () => this.winner !== rules.playersID.unknown;
+
+    isDeuce = () => this.scorePlayer1 === this.scorePlayer2 && this.scorePlayer1 === rules.scoreValues.forty;
+
+    playerHasAdvantage = playerID =>{
+        const player = this.getScore(playerID);
+        const oppositePlayer = this.getOppositeScore(playerID);
+        return this.advantage == playerID || (player === rules.scoreValues.forty && player - oppositePlayer >= 2);
     };
 
-    score = (pointWinner) => this.scores[pointWinner] += 1;
+    getScore = playerID => playerID == rules.playersID.player1 ? this.scorePlayer1 : this.scorePlayer2;
+    
+    getOppositeScore = playerID => playerID == rules.playersID.player1 ? this.scorePlayer2 : this.scorePlayer1;
+
+    getPlayerID = playerID => playerID === rules.playersID.player1 ? "Player1" : "Player2";
+
+    score = (pointWinnerID) => {
+        let pointWinnerScore = this.getScore(pointWinnerID);
+        if (this.playerHasAdvantage(pointWinnerID)){
+            this.winner = pointWinnerID;
+        }
+        else if(this.isDeuce()){
+            this.advantage === rules.playersID.unknown ?
+                               this.advantage = pointWinnerID :
+                               this.advantage = rules.playersID.unknown;
+        }
+        else{
+            const nextScoreValue = rules.getNextScoreValue(pointWinnerScore);
+            pointWinnerID == rules.playersID.player1 ? 
+                             this.scorePlayer1 = nextScoreValue : 
+                             this.scorePlayer2 = nextScoreValue;
+        }
+    }
 }
 
 class TennisGame{
     run(){
         let score = new GameScore();
-        let pointWinner;
         while(!score.gameIsOver()){
-            console.log(score.getScoreDescription());
-            pointWinner = this.getPointWinner();
-            score.score(pointWinner);
+            const pointWinnerID = this.getPointWinner();
+            score.score(pointWinnerID);
         }
         return score;
     }
 
     getPointWinner(){
         let rand = Math.random();
-        return rand < 0.5 ? playersID.player1 : playersID.player2;
+        return rand < 0.5 ? rules.playersID.player1 : rules.playersID.player2;
     }
 }
 
-let tennisGame = new TennisGame();
-let gameScore = tennisGame.run();
-scoreDescription = gameScore.getScoreDescription();
-console.log(scoreDescription);
+// let tennisGame = new TennisGame();
+// let gameScore = tennisGame.run();
+// scoreDescription = gameScore.getScoreDescription();
+// console.log(scoreDescription);
 
-
-module.exports = {TennisGame: TennisGame, playersID, GameScore};
+module.exports = {TennisGame: TennisGame, rules, GameScore};
